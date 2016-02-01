@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Ground Control Sample</string>
+    <string name="main_server_failure">Server Failure</string>
+    <string name="main_status_initializing">Initializing…</string>
+    <string name="main_status_locating">Locating…</string>
+    <string name="main_status_downloading">Downloading…</string>
+</resources>

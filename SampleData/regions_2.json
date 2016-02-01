@@ -1,0 +1,12 @@
+{
+	"regionList": [{
+	    "region": "US",
+		"path": "products_us_2.json"
+	}, {
+	    "region": "CA",
+	    "path": "products_ca_2.json"
+	}, {
+	    "region": "DEFAULT",
+		"path": "products_default_2.json"
+	}]
+}
