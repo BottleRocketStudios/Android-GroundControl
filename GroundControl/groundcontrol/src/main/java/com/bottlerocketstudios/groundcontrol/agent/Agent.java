@@ -11,6 +11,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.bottlerocketstudios.groundcontrol.agent;
@@ -40,18 +41,19 @@ public interface Agent<ResultType, ProgressType> extends Runnable {
     /**
      * Maximum amount of time in milliseconds to allow an Agent's run operation to run before being interrupted.
      * Using a very large number with a repeated task that fails to complete may result in exhausted Thread
-     * pool. Must be greater than getCancelTimeoutMs().
+     * pool. Must be greater than getCancelTimeoutMs(). <strong>This value will be read before execution.</strong>
      */
     long getRunTimeoutMs();
 
     /**
      * Maximum amount of time in milliseconds starting at run() before cancel() is called if incomplete.
+     * <strong>This value will be read before execution.</strong>
      */
     long getCancelTimeoutMs();
 
     /**
      * Maximum amount of time in milliseconds starting at run() to being discarded even if incomplete. Must be
-     * greater than getCancelTimeoutMs() and getRunTimeoutMs().
+     * greater than getCancelTimeoutMs() and getRunTimeoutMs(). <strong>This value will be read before execution.</strong>
      */
     long getMaximumTimeoutMs();
 
