@@ -100,32 +100,36 @@ Check out the GroundControlSample project to get a working demonstration of how 
 
 Add the jcenter repository and include the library in your project with the compile directive in your dependencies section of your build.gradle.
 
-        repositories {
-            ...
-            jcenter()
-        }
-        
-        ...
+```gradle
+repositories {
+    ...
+    jcenter()
+}
 
-        dependencies {
-            ...
-            compile 'com.bottlerocketstudios:groundcontrol:1.1.3'
-        }
+...
+
+dependencies {
+    ...
+    compile 'com.bottlerocketstudios:groundcontrol:1.1.3'
+}
+```
 
 In rare cases where you need to pull a snapshot build to help troubleshoot the develop branch, snapshots are hosted by JFrog. **You should not ship a release using the snapshot library** as the actual binary referenced by snapshot is going to change with every build of the develop branch.
 
-         repositories {
-            ...
-            jcenter()
-            maven {
-               url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
-            }
-         }
-         
-         dependencies {
-            ...
-            compile 'com.bottlerocketstudios:groundcontrol:1.1.4-SNAPSHOT'
-         }
+```gradle
+repositories {
+   ...
+   jcenter()
+   maven {
+      url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
+   }
+}
+ 
+dependencies {
+   ...
+   compile 'com.bottlerocketstudios:groundcontrol:1.1.4-SNAPSHOT'
+}
+```
 
 ### Sample Usage
 The samples below alternate between inline anonymous listeners and listeners defined as fields in the parent class. This is done to illustrate two (of many) different ways of doing it. Whatever fits your team is the best way to do it.
@@ -133,326 +137,342 @@ The samples below alternate between inline anonymous listeners and listeners def
 #### Normal Data Fetch and Display
 This simple example illustrates the use of an Agent "MyAgent" that will return a Boolean result and deliver Float progress indication. The return type and the progress types are simple here for demonstration purposes.
 
-        com/.../ui/MyFragment.java
+```java
+com/.../ui/MyFragment.java
 
-        public class MyFragment extends Fragment {        
-            ...
-            @Override
-            onDestroy() {
-                //This should be in your BaseFragment
-                GroundControl.onDestroy(this);
-            }
-            ...
-            @Override
-            onStart() {
-                startMyAgent();
-            }
-            
-            private void startMyAgent() {
-                mProgress.show();
-                GroundControl.uiAgent(this, new MyAgent(getActivity()))
-                        .uiCallback(new AgentListener<Boolean, Float>() {
-                            @Override
-                            public void onCompletion(String agentIdentifier, Boolean success) {
-                                mProgress.hide();
-                                Toast.makeText(getActivity(), "Success: " + success, Toast.LENGTH_LONG).show();
-                            }
+public class MyFragment extends Fragment {        
+    ...
+    @Override
+    onDestroy() {
+        //This should be in your BaseFragment
+        GroundControl.onDestroy(this);
+    }
+    ...
+    @Override
+    onStart() {
+        startMyAgent();
+    }
+    
+    private void startMyAgent() {
+        mProgress.show();
+        GroundControl.uiAgent(this, new MyAgent(getActivity()))
+                .uiCallback(new AgentListener<Boolean, Float>() {
+                    @Override
+                    public void onCompletion(String agentIdentifier, Boolean success) {
+                        mProgress.hide();
+                        Toast.makeText(getActivity(), "Success: " + success, Toast.LENGTH_LONG).show();
+                    }
 
-                            @Override
-                            public void onProgress(String agentIdentifier, Float progress) {
-                                mProgress.setIndeterminate(false);
-                                mProgress.setMax(100);
-                                mProgress.setProgress(Math.round(progress * 100.0f));
-                            }
-                        })
-                        .execute();
-            }
+                    @Override
+                    public void onProgress(String agentIdentifier, Float progress) {
+                        mProgress.setIndeterminate(false);
+                        mProgress.setMax(100);
+                        mProgress.setProgress(Math.round(progress * 100.0f));
+                    }
+                })
+                .execute();
+    }
+}
+
+com/.../agent/MyAgent.java
+
+public class MyAgent extends AbstractAgent<Boolean, Float> {
+    
+    private final Context mContext;
+    private float mProgress;
+    private boolean mCancelled;
+
+    public MyAgent(Context context) {
+        mContext = context.getApplicationContext();
+    }
+
+    @Override
+    public String getUniqueIdentifier() {
+        return MyAgent.class.getCanonicalName();
+    }
+
+    @Override
+    public void cancel() {
+        mCancelled = true;
+    }
+
+    @Override
+    public void onProgressUpdateRequested() {
+        notifyProgress();
+    }
+    
+    private notifyProgress() {
+        getAgentListener().onProgress(getUniqueIdentifier(), mProgress);            
+    }
+
+    @Override
+    public void run() {
+        boolean success = false;
+        ...
+        while (!mCancelled) {
+            //Do some time consuming iterative work then notify 50% complete. 
+            mProgress = 0.5f;
+            notifyProgress();
         }
-        
-        com/.../agent/MyAgent.java
-        
-        public class MyAgent extends AbstractAgent<Boolean, Float> {
-            
-            private final Context mContext;
-            private float mProgress;
-            private boolean mCancelled;
-
-            public MyAgent(Context context) {
-                mContext = context.getApplicationContext();
-            }
-
-            @Override
-            public String getUniqueIdentifier() {
-                return MyAgent.class.getCanonicalName();
-            }
-
-            @Override
-            public void cancel() {
-                mCancelled = true;
-            }
-
-            @Override
-            public void onProgressUpdateRequested() {
-                notifyProgress();
-            }
-            
-            private notifyProgress() {
-                getAgentListener().onProgress(getUniqueIdentifier(), mProgress);            
-            }
-
-            @Override
-            public void run() {
-                boolean success = false;
-                ...
-                while (!mCancelled) {
-                    //Do some time consuming iterative work then notify 50% complete. 
-                    mProgress = 0.5f;
-                    notifyProgress();
-                }
-                ...                
-                //Work is over notify completion.                
-                getAgentListener().onComplete(getUniqueIdentifier(), success && !mCancelled);
-            }
-        }
+        ...                
+        //Work is over notify completion.                
+        getAgentListener().onComplete(getUniqueIdentifier(), success && !mCancelled);
+    }
+}
+```
         
 #### One-time data post
 This example uses the oneTime facility of GroundControl to manage reattach after configuration change for a long running one-time operation. This could be submission of authentication credentials, a form, a purchase, or other one-time write operation. File uploads should be done with a Service that has an ongoing Notification. 
 
-        com/.../ui/MyLoginFragment.java
+```java
+com/.../ui/MyLoginFragment.java
 
-        public class MyLoginFragment extends Fragment {        
+public class MyLoginFragment extends Fragment {        
+
+    private static final String ONE_TIME_AUTHENTICATION = MyLoginFragment.class.getCanonicalName() + ".oneTimeAuthentication";
+    ...
+    @Override
+    onDestroy() {
+        //This should be in your BaseFragment
+        GroundControl.onDestroy(this);
+    }
+    ...
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        //Reattach to the ongoing (or not) one-time operation hitting the cache if it was completed during rotation.
+        GroundControl.reattachToOneTime(this, ONE_TIME_AUTHENTICATION, mLoginAgentListener);
+    }
+    
+    private void startLogin(String username, String password) {
+        mProgress.show();
         
-            private static final String ONE_TIME_AUTHENTICATION = MyLoginFragment.class.getCanonicalName() + ".oneTimeAuthentication";
-            ...
-            @Override
-            onDestroy() {
-                //This should be in your BaseFragment
-                GroundControl.onDestroy(this);
-            }
-            ...
-            @Override
-            public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-                super.onActivityCreated(savedInstanceState);
-                //Reattach to the ongoing (or not) one-time operation hitting the cache if it was completed during rotation.
-                GroundControl.reattachToOneTime(this, ONE_TIME_AUTHENTICATION, mLoginAgentListener);
-            }
-            
-            private void startLogin(String username, String password) {
-                mProgress.show();
-                
-                /*
-                 * Execute the login, forcing a bypass of cache and tagging the execution as
-                 * a one-time operation which can be reattached if the device is rotated. 
-                 */
-                GroundControl.uiAgent(this, new MyAgent(getActivity(), username, password))
-                    .uiCallback(mLoginAgentListener)
-                    .oneTime(ONE_TIME_AUTHENTICATION)
-                    .bypassCache(true)
-                    .execute();
-            }
-            
-            //FunctionalAgentListener has a built in empty onProgress implementation for convenience. 
-            AgentListener<Boolean, Void> mLoginAgentListener = new FunctionalAgentListener<Boolean, Void>() {
-                @Override
-                public void onCompletion(String agentIdentifier, Boolean success) {
-                    //discard reference to this one time agent in-progress.
-                    GroundControl.onOneTimeCompletion(ONE_TIME_AUTHENTICATION);
-                    mProgress.hide();
-                    Toast.makeText(getActivity(), "Success: " + success, Toast.LENGTH_LONG).show();
-                }
-            };
+        /*
+         * Execute the login, forcing a bypass of cache and tagging the execution as
+         * a one-time operation which can be reattached if the device is rotated. 
+         */
+        GroundControl.uiAgent(this, new MyAgent(getActivity(), username, password))
+            .uiCallback(mLoginAgentListener)
+            .oneTime(ONE_TIME_AUTHENTICATION)
+            .bypassCache(true)
+            .execute();
+    }
+    
+    //FunctionalAgentListener has a built in empty onProgress implementation for convenience. 
+    AgentListener<Boolean, Void> mLoginAgentListener = new FunctionalAgentListener<Boolean, Void>() {
+        @Override
+        public void onCompletion(String agentIdentifier, Boolean success) {
+            //discard reference to this one time agent in-progress.
+            GroundControl.onOneTimeCompletion(ONE_TIME_AUTHENTICATION);
+            mProgress.hide();
+            Toast.makeText(getActivity(), "Success: " + success, Toast.LENGTH_LONG).show();
         }
-        
-        com/.../agent/MyLoginAgent.java
-        
-        public class MyLoginAgent extends AbstractAgent<Boolean, Void> {
-            
-            private final Context mContext;
-            private final String mUsername;
-            private final String mPassword;
-            private boolean mCancelled;
-            
-            public MyLoginAgent(Context context, String username, String password) {
-                mContext = context.getApplicationContext();
-                mUsername = username;
-                mPassword = password;
-            }
+    };
+}
 
-            @Override
-            public String getUniqueIdentifier() {
-                return MyLoginAgent.class.getCanonicalName();
-            }
+com/.../agent/MyLoginAgent.java
 
-            @Override
-            public void cancel() {
-                mCancelled = true;
-            }
+public class MyLoginAgent extends AbstractAgent<Boolean, Void> {
+    
+    private final Context mContext;
+    private final String mUsername;
+    private final String mPassword;
+    private boolean mCancelled;
+    
+    public MyLoginAgent(Context context, String username, String password) {
+        mContext = context.getApplicationContext();
+        mUsername = username;
+        mPassword = password;
+    }
 
-            @Override
-            public void onProgressUpdateRequested() {}
-            
-            @Override
-            public void run() {
-                boolean success = false;
-                ...
-                success = LoginThing.doLogin(mUsername, mPassword);
-                ...                
-                //Work is over notify completion.                
-                getAgentListener().onComplete(getUniqueIdentifier(), success && !mCancelled);
-            }
-        }
+    @Override
+    public String getUniqueIdentifier() {
+        return MyLoginAgent.class.getCanonicalName();
+    }
+
+    @Override
+    public void cancel() {
+        mCancelled = true;
+    }
+
+    @Override
+    public void onProgressUpdateRequested() {}
+    
+    @Override
+    public void run() {
+        boolean success = false;
+        ...
+        success = LoginThing.doLogin(mUsername, mPassword);
+        ...                
+        //Work is over notify completion.                
+        getAgentListener().onComplete(getUniqueIdentifier(), success && !mCancelled);
+    }
+}
+```
 
 #### Dependent Agent Execution
 Agents can depend on other agents to do their work. Here work is handed off to another agent and we wait for that agent to complete and deliver a result before proceeding. If you have multiple dependencies, look at the Sample app usage of DependencyHandlingAgent.
 
 **IMPORTANT** All execution paths must call call onComplete on the AgentListener or the Agent will timeout and eventually deliver a null result. 
 
-        public class MyStoreFinderAgent extends AbstractAgent<StoreCollection, Void> {
-            
-            private final Context mContext;
-            private boolean mCancelled;
-                        
-            public MyStoreFinderAgent(Context context) {
-                mContext = context.getApplicationContext();
-            }
+```java
+public class MyStoreFinderAgent extends AbstractAgent<StoreCollection, Void> {
+    
+    private final Context mContext;
+    private boolean mCancelled;
+                
+    public MyStoreFinderAgent(Context context) {
+        mContext = context.getApplicationContext();
+    }
 
-            @Override
-            public String getUniqueIdentifier() {
-                return MyStoreFinderAgent.class.getCanonicalName();
-            }
+    @Override
+    public String getUniqueIdentifier() {
+        return MyStoreFinderAgent.class.getCanonicalName();
+    }
 
-            @Override
-            public void cancel() {
-                mCancelled = true;
-            }
+    @Override
+    public void cancel() {
+        mCancelled = true;
+    }
 
-            @Override
-            public void onProgressUpdateRequested() {}
-            
-            @Override
-            public void run() {
-                GroundControl.bgAgent(getAgentExecutor(), new LocationAgent())
-                    .bgParallelCallback(new FunctionalAgentListener<Location, Void> {
-                        @Override
-                        public void onCompletion(String agentIdentifier, Location location) {
-                            StoreCollection storeCollection = null;
-                            if (location != null) {
-                                StoreCollection storeCollection = getStoreCollection(location);
-                            }
-                            getAgentListener().onCompletion(getUniqueIdentifier(), storeCollection);
-                        }
-                    })
-                    .execute();
-            }
-            
-            private StoreCollection getStoreCollection(Location location) {
-                //Whatever exchanges a location for a StoreCollection.
-                return theStoreCollectionForLocation;
-            }
-            
-        }
+    @Override
+    public void onProgressUpdateRequested() {}
+    
+    @Override
+    public void run() {
+        GroundControl.bgAgent(getAgentExecutor(), new LocationAgent())
+            .bgParallelCallback(new FunctionalAgentListener<Location, Void> {
+                @Override
+                public void onCompletion(String agentIdentifier, Location location) {
+                    StoreCollection storeCollection = null;
+                    if (location != null) {
+                        StoreCollection storeCollection = getStoreCollection(location);
+                    }
+                    getAgentListener().onCompletion(getUniqueIdentifier(), storeCollection);
+                }
+            })
+            .execute();
+    }
+    
+    private StoreCollection getStoreCollection(Location location) {
+        //Whatever exchanges a location for a StoreCollection.
+        return theStoreCollectionForLocation;
+    }
+    
+}
+```
 
 #### Customizing Policy
 It is now much easier to do a one-off modification of the policy before execution. This allows you to customize attributes of the policy without having to use a AgentPolicyBuilder instance to create a new policy. You must supply the policy explicitly or callback via uiCallback/bg*Callback beforehand as those will default to the correct baseline policy. Policies are immutable so the supplied policy itself cannot be modified, it will be the basis for a new instance. 
 
-        //Executing a UI agent with a really fast do or die deadline of 2 seconds. 
-        //If we don't get a result by then, consider it a failure.
-        GroundControl.uiAgent(this, new MyAgent())
-            .uiCallback(mMyListener)
-            .timeout(TimeUnit.seconds.toMillis(2))
-            .execute();
-            
-        //Skipping the cache because we know the cached data is invalid. It is a builder
-        //so we can keep the same 2 second deadline addition if we wanted to. 
-        GroundControl.uiAgent(this, new MyAgent())
-            .uiCallback(mMyListener)
-            .timeout(TimeUnit.seconds.toMillis(2))
-            .bypassCache(true)
-            .execute();
-        
-        //Supply an explicit policy then modify it to bypass cache and callback on the UI handler. 
-        GroundControl.uiAgent(this, new MyAgent())
-            .policy(myFavoritePolicy)
-            .uiCallback(mMyListener)
-            .bypassCache(true)
-            .execute();
+```java
+//Executing a UI agent with a really fast do or die deadline of 2 seconds. 
+//If we don't get a result by then, consider it a failure.
+GroundControl.uiAgent(this, new MyAgent())
+    .uiCallback(mMyListener)
+    .timeout(TimeUnit.seconds.toMillis(2))
+    .execute();
+    
+//Skipping the cache because we know the cached data is invalid. It is a builder
+//so we can keep the same 2 second deadline addition if we wanted to. 
+GroundControl.uiAgent(this, new MyAgent())
+    .uiCallback(mMyListener)
+    .timeout(TimeUnit.seconds.toMillis(2))
+    .bypassCache(true)
+    .execute();
+
+//Supply an explicit policy then modify it to bypass cache and callback on the UI handler. 
+GroundControl.uiAgent(this, new MyAgent())
+    .policy(myFavoritePolicy)
+    .uiCallback(mMyListener)
+    .bypassCache(true)
+    .execute();
+```
             
 #### Customizing Global Policies
 GroundControl will automatically build sensible policies that will callback on the UI Looper, a background ThreadPool, or the AgentExecutor's background Looper. You may also supply per AgentExecutor overrides for these default policies. 
 
 **IMPORTANT** These policies should be updated once in the onCreate of your application object. Updating the defaults at runtime will break expectation for other objects. See above to create one-time policies. 
         
-        //Create the policies then register them
-        GroundControl.registerPolicy(AgentPolicyCache.POLICY_IDENTIFIER_UI, uiPolicy);  
-        GroundControl.registerPolicy(AgentPolicyCache.POLICY_IDENTIFIER_BG_SERIAL, bgSerialPolicy);    
-        GroundControl.registerPolicy(AgentPolicyCache.POLICY_IDENTIFIER_BG_PARALLEL, bgParallelPolicy);    
+```java
+//Create the policies then register them
+GroundControl.registerPolicy(AgentPolicyCache.POLICY_IDENTIFIER_UI, uiPolicy);  
+GroundControl.registerPolicy(AgentPolicyCache.POLICY_IDENTIFIER_BG_SERIAL, bgSerialPolicy);    
+GroundControl.registerPolicy(AgentPolicyCache.POLICY_IDENTIFIER_BG_PARALLEL, bgParallelPolicy);    
 
-		//Later these policies are automatically selected with these methods on the ExecutionBuilder
-		.uiPolicy()
-		.bgSerialPolicy()
-		.bgParallelPolicy()
-		
-		//Or if no policy is explicitly selected and these methods are called on the ExecutionBuilder
-		.uiCallback()
-		.bgSerialCallback()
-		.bgParallelCallback()
+//Later these policies are automatically selected with these methods on the ExecutionBuilder
+.uiPolicy()
+.bgSerialPolicy()
+.bgParallelPolicy()
+
+//Or if no policy is explicitly selected and these methods are called on the ExecutionBuilder
+.uiCallback()
+.bgSerialCallback()
+.bgParallelCallback()
+```
 
 You may also create your own policies that are not part of the defaults
 
-		//Create a policy that always bypasses cache by default. Do this from the Application object.
-		public class MyGroundControlConfiguration {
-			public static final String MY_POLICY_NAME = "myPolicy";
+```java
+//Create a policy that always bypasses cache by default. Do this from the Application object.
+public class MyGroundControlConfiguration {
+	public static final String MY_POLICY_NAME = "myPolicy";
 
-			public static void initialize() {
-				AgentPolicy myPolicy = (new StandardAgentPolicyBuilder()).setBypassCache(true).build();
-				GroundControl.registerPolicy(MY_POLICY_NAME, myPolicy);
-			}
-		}
-		
-		//Later use that policy by name anywhere in the app. 
-		GroundControl.uiAgent(this, new MyAgent())
-			.policy(MyGroundControlConfiguration.MY_POLICY_NAME)
-			.uiCallback(mMyListener)
-			.execute();
+	public static void initialize() {
+		AgentPolicy myPolicy = (new StandardAgentPolicyBuilder()).setBypassCache(true).build();
+		GroundControl.registerPolicy(MY_POLICY_NAME, myPolicy);
+	}
+}
+
+//Later use that policy by name anywhere in the app. 
+GroundControl.uiAgent(this, new MyAgent())
+	.policy(MyGroundControlConfiguration.MY_POLICY_NAME)
+	.uiCallback(mMyListener)
+	.execute();
+```
 
 #### Customizing AgentExecutor
 The AgentExecutor can be customized quite a bit using the AgentExecutorBuilder. With it you can customize (or not) just about every aspect of the AgentExecutor. This is an advanced topic and almost anything can be achieved with the combination of AgentPolicy and custom Agent implementations. If you think you need to customize this, be sure that the AgentPolicy or some custom Agent would not work. 
 
-		//Create a new Agent Executor, call this from your Application's onCreate
-		public class MyGroundControlConfiguration {
-			public static final String MY_AGENT_EXECUTOR = "myAgentExecutor";
+```java
+//Create a new Agent Executor, call this from your Application's onCreate
+public class MyGroundControlConfiguration {
+	public static final String MY_AGENT_EXECUTOR = "myAgentExecutor";
 
-			public static void initialize() {
-				//AgentTethers need to be built better for some reason.
-				AgentExecutor myAgentExecutor = (new AgentExecutorBuilder())
-						.setAgentTetherBuilder(new MyAgentTetherBuilder())
-						.build();
-				
-				//Register the new AgentExecutor
-				AgentExecutor.setInstance(MY_AGENT_EXECUTOR, myAgentExecutor);
+	public static void initialize() {
+		//AgentTethers need to be built better for some reason.
+		AgentExecutor myAgentExecutor = (new AgentExecutorBuilder())
+				.setAgentTetherBuilder(new MyAgentTetherBuilder())
+				.build();
+		
+		//Register the new AgentExecutor
+		AgentExecutor.setInstance(MY_AGENT_EXECUTOR, myAgentExecutor);
 
-				/*
-				 * Make it so that this is the default for the GroundControl tool.
-				 * You can call this method many times with the same agentExecutorId.
-				 * However, if you call it again with a different id, it will throw
-				 * an exception and reject the change because it can break expectations
-				 * elsewhere in the app. 
-				 */
-				GroundControl.setDefaultAgentExecutorId(MY_AGENT_EXECUTOR);
-			}
-		}
+		/*
+		 * Make it so that this is the default for the GroundControl tool.
+		 * You can call this method many times with the same agentExecutorId.
+		 * However, if you call it again with a different id, it will throw
+		 * an exception and reject the change because it can break expectations
+		 * elsewhere in the app. 
+		 */
+		GroundControl.setDefaultAgentExecutorId(MY_AGENT_EXECUTOR);
+	}
+}
+```
 
 You may also have a one-off AgentExecutor for some really specific special purpose that has not yet been imagined. To that end, the GroundControl tool and everything really, is built to support as many AgentExecutors as the system will support, each identified by a unique String identifier. 
 
-		//Expanding on the example above, if the GroundContorl.setDefaultAgentExecutorId 
-		//were not called and the default remained the typical default. You could use 
-		//the overrides on GroundControl to use that specific AgentExecutor.
-		
-		GroundControl.uiAgent(MyGroundControlConfiguration.MY_AGENT_EXECUTOR,
-								this, 
-								new MyAgent())
-					 .uiCallback(mMyListener)
-					 .execute();
+```java
+//Expanding on the example above, if the GroundContorl.setDefaultAgentExecutorId 
+//were not called and the default remained the typical default. You could use 
+//the overrides on GroundControl to use that specific AgentExecutor.
+
+GroundControl.uiAgent(MyGroundControlConfiguration.MY_AGENT_EXECUTOR,
+						this, 
+						new MyAgent())
+			 .uiCallback(mMyListener)
+			 .execute();
+```
 
 ### Build
 This project must be built with gradle. 
