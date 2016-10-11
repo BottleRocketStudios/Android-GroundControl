@@ -20,5 +20,6 @@ package com.bottlerocketstudios.groundcontrolsample.product.model;
  */
 public enum ProductUpdateStatus {
     LOCATING,
-    INITIALIZING, DOWNLOADING
+    INITIALIZING,
+    DOWNLOADING
 }

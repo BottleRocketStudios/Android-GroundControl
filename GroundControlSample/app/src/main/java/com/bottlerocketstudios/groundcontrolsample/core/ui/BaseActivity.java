@@ -26,8 +26,8 @@ public class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        GroundControl.onDestroy(this);
         super.onDestroy();
+        GroundControl.onDestroy(this);
     }
 
 }

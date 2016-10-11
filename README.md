@@ -109,7 +109,7 @@ Add the jcenter repository and include the library in your project with the comp
 
         dependencies {
             ...
-            compile 'com.bottlerocketstudios:groundcontrol:1.1.3'
+            compile 'com.bottlerocketstudios:groundcontrol:1.1.4'
         }
 
 In rare cases where you need to pull a snapshot build to help troubleshoot the develop branch, snapshots are hosted by JFrog. **You should not ship a release using the snapshot library** as the actual binary referenced by snapshot is going to change with every build of the develop branch.
@@ -124,7 +124,7 @@ In rare cases where you need to pull a snapshot build to help troubleshoot the d
          
          dependencies {
             ...
-            compile 'com.bottlerocketstudios:groundcontrol:1.1.4-SNAPSHOT'
+            compile 'com.bottlerocketstudios:groundcontrol:1.1.5-SNAPSHOT'
          }
 
 ### Sample Usage
@@ -414,6 +414,10 @@ You may also create your own policies that are not part of the defaults
 			.policy(MyGroundControlConfiguration.MY_POLICY_NAME)
 			.uiCallback(mMyListener)
 			.execute();
+			
+There is now a single method to call if you want to disable the UI cache globally which is useful if you have another means of keeping the result around and receiving delivery of the result even during a configuration change.
+
+        GroundControl.disableCache();
 
 #### Customizing AgentExecutor
 The AgentExecutor can be customized quite a bit using the AgentExecutorBuilder. With it you can customize (or not) just about every aspect of the AgentExecutor. This is an advanced topic and almost anything can be achieved with the combination of AgentPolicy and custom Agent implementations. If you think you need to customize this, be sure that the AgentPolicy or some custom Agent would not work. 

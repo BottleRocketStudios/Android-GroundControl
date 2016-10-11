@@ -23,6 +23,7 @@ import com.bottlerocketstudios.groundcontrol.agent.AbstractAgent;
 import com.bottlerocketstudios.groundcontrol.agent.Agent;
 import com.bottlerocketstudios.groundcontrol.listener.AgentListener;
 import com.bottlerocketstudios.groundcontrol.policy.AgentPolicy;
+import com.bottlerocketstudios.groundcontrol.policy.StandardAgentPolicyBuilder;
 import com.bottlerocketstudios.groundcontrol.tether.AgentTether;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -135,6 +136,18 @@ public class GroundControl {
      */
     public static AgentPolicy getPolicy(String agentExecutorId, String policyIdentifier) {
         return getExecutionBuilderFactory(agentExecutorId).getPolicy(policyIdentifier);
+    }
+
+    public static void disableCache() {
+        disableCache(sDefaultAgentExecutorId);
+    }
+
+    public static void disableCache(String agentExecutorId) {
+        AgentPolicy agentPolicy = new StandardAgentPolicyBuilder().buildUpon(getPolicy(agentExecutorId, AgentPolicyCache.POLICY_IDENTIFIER_UI))
+                .setMaxCacheAgeMs(0)
+                .setBypassCache(true)
+                .build();
+        registerPolicy(agentExecutorId, agentPolicy);
     }
 
     /**
