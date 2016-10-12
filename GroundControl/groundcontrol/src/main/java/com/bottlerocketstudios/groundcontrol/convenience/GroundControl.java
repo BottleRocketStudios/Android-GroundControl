@@ -152,7 +152,7 @@ public class GroundControl {
         AgentPolicy agentPolicy = new StandardAgentPolicyBuilder().buildUpon(getPolicy(agentExecutorId, AgentPolicyCache.POLICY_IDENTIFIER_UI))
                 .disableCache()
                 .build();
-        registerPolicy(agentExecutorId, agentPolicy);
+        registerPolicy(agentExecutorId, AgentPolicyCache.POLICY_IDENTIFIER_UI, agentPolicy);
     }
 
     /**
