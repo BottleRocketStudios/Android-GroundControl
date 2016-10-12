@@ -53,7 +53,7 @@ The goal in designing Agents is that the consumer of the information doesn't kno
     *   Manage a repository for default AgentPolicy instances.
     *   Make building upon standard policies easier. 
     *   Helps put rails on common usage patterns. 
-    *   If you call .uiAgent(this, agent) then you must call .onDestroy(this) where *this* is an instance of a UI element.
+    *   **IMPORTANT** If you call .uiAgent(this, agent) then you must call .onDestroy(this) where *this* is an instance of a **UI** lifecycle related object like an Activity, Fragment, Presenter or View. Using just .agent().uiCallback() is sufficient if you only need for the callback to be on the UI thread but handled by a durable object. 
 *   Agent - A unit of work that has some agency to determine what its blocking operations may be before delivering a result or progress indication.
     *   AbstractAgent handles some of the basic plumbing. Extend from it in most cases.
     *   DependencyHandlingAgent is useful if your Agent will depend on multiple other Agents completing before it can start.
@@ -417,7 +417,14 @@ You may also create your own policies that are not part of the defaults
 			
 There is now a single method to call if you want to disable the UI cache globally which is useful if you have another means of keeping the result around and receiving delivery of the result even during a configuration change.
 
+        //Globally disable cache for the default UI policy on the default executor.
         GroundControl.disableCache();
+        
+        //One-time disable cache for single execution
+        GroundControl.uiAgent(this, new MyAgent())
+            .disableCache()
+            .uiCallback(mMyListener)
+            .execute();
 
 #### Customizing AgentExecutor
 The AgentExecutor can be customized quite a bit using the AgentExecutorBuilder. With it you can customize (or not) just about every aspect of the AgentExecutor. This is an advanced topic and almost anything can be achieved with the combination of AgentPolicy and custom Agent implementations. If you think you need to customize this, be sure that the AgentPolicy or some custom Agent would not work. 
