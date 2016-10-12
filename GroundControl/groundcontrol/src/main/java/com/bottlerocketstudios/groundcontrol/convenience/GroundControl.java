@@ -138,14 +138,19 @@ public class GroundControl {
         return getExecutionBuilderFactory(agentExecutorId).getPolicy(policyIdentifier);
     }
 
+    /**
+     * Sets the default UI policy for the default AgentExecutor to disable cache.
+     */
     public static void disableCache() {
         disableCache(sDefaultAgentExecutorId);
     }
 
+    /**
+     * Sets the default UI policy for the specified AgentExecutor to disable cache.
+     */
     public static void disableCache(String agentExecutorId) {
         AgentPolicy agentPolicy = new StandardAgentPolicyBuilder().buildUpon(getPolicy(agentExecutorId, AgentPolicyCache.POLICY_IDENTIFIER_UI))
-                .setMaxCacheAgeMs(0)
-                .setBypassCache(true)
+                .disableCache()
                 .build();
         registerPolicy(agentExecutorId, agentPolicy);
     }
