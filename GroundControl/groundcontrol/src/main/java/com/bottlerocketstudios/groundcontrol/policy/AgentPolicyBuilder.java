@@ -132,6 +132,11 @@ public interface AgentPolicyBuilder {
     AgentPolicyBuilder buildUpon(AgentPolicy agentPolicy);
 
     /**
+     * Set both cache lifetime to 0 and bypass cache to true.
+     */
+    AgentPolicyBuilder disableCache();
+
+    /**
      * Perform validation, set defaults, and deliver built instance of AgentPolicy.
      */
     AgentPolicy build();

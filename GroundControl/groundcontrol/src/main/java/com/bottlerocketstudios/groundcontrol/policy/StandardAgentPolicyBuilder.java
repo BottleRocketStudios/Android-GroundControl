@@ -265,9 +265,11 @@ public class StandardAgentPolicyBuilder implements AgentPolicyBuilder {
         return new AgentPolicy(this);
     }
 
-    private void disableCache() {
+    @Override
+    public AgentPolicyBuilder disableCache() {
         setBypassCache(true);
         setMaxCacheAgeMs(0);
+        return this;
     }
 
     private void validatePolicy() {
