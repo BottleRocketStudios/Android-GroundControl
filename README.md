@@ -196,10 +196,6 @@ This simple example illustrates the use of an Agent "MyAgent" that will return a
                 notifyProgress();
             }
             
-            private notifyProgress() {
-                getAgentListener().onProgress(getUniqueIdentifier(), mProgress);            
-            }
-
             @Override
             public void run() {
                 boolean success = false;
@@ -207,11 +203,11 @@ This simple example illustrates the use of an Agent "MyAgent" that will return a
                 while (!mCancelled) {
                     //Do some time consuming iterative work then notify 50% complete. 
                     mProgress = 0.5f;
-                    notifyProgress();
+                    notifyProgress(mProgress);
                 }
                 ...                
                 //Work is over notify completion.                
-                getAgentListener().onComplete(getUniqueIdentifier(), success && !mCancelled);
+                notifyCompletion(success && !mCancelled);
             }
         }
         
@@ -298,7 +294,7 @@ This example uses the oneTime facility of GroundControl to manage reattach after
                 success = LoginThing.doLogin(mUsername, mPassword);
                 ...                
                 //Work is over notify completion.                
-                getAgentListener().onComplete(getUniqueIdentifier(), success && !mCancelled);
+                notifyCompletion(success && !mCancelled);
             }
         }
 
@@ -339,7 +335,7 @@ Agents can depend on other agents to do their work. Here work is handed off to a
                             if (location != null) {
                                 StoreCollection storeCollection = getStoreCollection(location);
                             }
-                            getAgentListener().onCompletion(getUniqueIdentifier(), storeCollection);
+                            notifyCompletion(storeCollection);
                         }
                     })
                     .execute();

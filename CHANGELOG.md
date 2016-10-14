@@ -1,6 +1,8 @@
 # Ground Control Changelog #
 
-*   1.1.4 - Create single method call to disable cache on UI AgentPolicy.
+*   1.1.4 - Ease of use
+    *   Create single method call to disable cache on UI AgentPolicy.
+    *   Add notifyCompletion() and notifyProgress() methods on AbstractAgent.
 *	1.1.3 - Open Source Release
 *   1.1.1 - Bugfix
     *   Fix temporarily leaking most recent AgentListener.
