@@ -11,7 +11,7 @@ project.ext.artifactory_artifactid = "groundcontrol"
 project.ext.artifactory_packaging = "jar"
 project.ext.artifactory_description = "Ground Control provides asynchronous queueing, coalescing, execution and short term caching."
 project.ext.artifactory_project_url = "https://github.com/BottleRocketStudios/Android-GroundControl"
-project.ext.artifactory_name = project.ext.artifactory_name = group + "." + project.ext.artifactory_artifactid
+project.ext.artifactory_name = group + "." + project.ext.artifactory_artifactid
 project.ext.artifactory_vcs_url = "https://github.com/BottleRocketStudios/Android-GroundControl"
 
 project.ext.bundle_name = "groundcontrol"
