@@ -56,8 +56,10 @@ public class MainActivity extends BaseActivity {
     protected void onStart() {
         super.onStart();
         GroundControl.uiAgent(this, new GetLatestLocalProductsAgent(this))
+                .cacheAgeMs(0)
                 .uiCallback(mProductAgentListener)
                 .execute();
+
     }
 
     private AgentListener<ProductResponse, ProductUpdateStatus> mProductAgentListener = new AgentListener<ProductResponse, ProductUpdateStatus>() {

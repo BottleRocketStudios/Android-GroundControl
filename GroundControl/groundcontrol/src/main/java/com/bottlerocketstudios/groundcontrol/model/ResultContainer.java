@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Bottle Rocket LLC.
+ * Copyright (c) 2016. Bottle Rocket LLC
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -11,23 +11,30 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package com.bottlerocketstudios.groundcontrolsample.core.ui;
-
-import android.support.v7.app.AppCompatActivity;
-
-import com.bottlerocketstudios.groundcontrol.convenience.GroundControl;
+package com.bottlerocketstudios.groundcontrol.model;
 
 /**
- * BaseActivity that will call destroy on GroundControl
+ * Convenient Pair-like object with more explicit field and accessor names.
+ * @param <R> Type of result.
+ * @param <S> Type of status.
  */
-public class BaseActivity extends AppCompatActivity {
+public class ResultContainer<R, S> {
+    private final R mResult;
+    private final S mStatus;
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        GroundControl.onDestroy(this);
+    public ResultContainer(R result, S status) {
+        mResult = result;
+        mStatus = status;
     }
 
+    public R getResult() {
+        return mResult;
+    }
+
+    public S getStatus() {
+        return mStatus;
+    }
 }

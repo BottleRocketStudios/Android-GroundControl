@@ -25,9 +25,9 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractAgent<ResultType, ProgressType> implements Agent<ResultType, ProgressType> {
 
-    private static final long DEFAULT_CANCEL_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(2);
-    private static final long DEFAULT_RUN_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(3);
-    private static final long DEFAULT_MAXIMUM_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(5);
+    protected static final long DEFAULT_CANCEL_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(2);
+    protected static final long DEFAULT_RUN_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(3);
+    protected static final long DEFAULT_MAXIMUM_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(5);
 
     private AgentListener<ResultType, ProgressType> mAgentListener;
     private long mRunTimeoutMs;
@@ -46,6 +46,9 @@ public abstract class AbstractAgent<ResultType, ProgressType> implements Agent<R
         return mRunTimeoutMs;
     }
 
+    /**
+     * Specify the run timeout for this Agent in milliseconds. Refer to {@link Agent#getRunTimeoutMs()} and {@link AbstractAgent#DEFAULT_RUN_TIMEOUT_MS}
+     */
     public void setRunTimeoutMs(long runTimeoutMs) throws IllegalArgumentException {
         if (runTimeoutMs <= 0) throw new IllegalArgumentException("Timeout must be > 0");
         mRunTimeoutMs = runTimeoutMs;
@@ -56,6 +59,9 @@ public abstract class AbstractAgent<ResultType, ProgressType> implements Agent<R
         return mCancelTimeoutMs;
     }
 
+    /**
+     * Specify the cancel timeout for this Agent in milliseconds. Refer to {@link Agent#getCancelTimeoutMs()} and {@link AbstractAgent#DEFAULT_CANCEL_TIMEOUT_MS}
+     */
     public void setCancelTimeoutMs(long cancelTimeoutMs) throws IllegalArgumentException {
         if (cancelTimeoutMs <= 0) throw new IllegalArgumentException("Timeout must be > 0");
         mCancelTimeoutMs = cancelTimeoutMs;
@@ -66,11 +72,17 @@ public abstract class AbstractAgent<ResultType, ProgressType> implements Agent<R
         return mMaximumTimeoutMs;
     }
 
+    /**
+     * Specify the maximum timeout for this Agent in milliseconds. Refer to {@link Agent#getMaximumTimeoutMs()} and {@link AbstractAgent#DEFAULT_MAXIMUM_TIMEOUT_MS}
+     */
     public void setMaximumTimeoutMs(long maximumTimeoutMs) throws IllegalArgumentException {
         if (maximumTimeoutMs <= 0) throw new IllegalArgumentException("Timeout must be > 0");
         mMaximumTimeoutMs = maximumTimeoutMs;
     }
 
+    /**
+     * Get the AgentListener associated with this Agent's execution.
+     */
     protected AgentListener<ResultType, ProgressType> getAgentListener() {
         return mAgentListener;
     }
@@ -81,6 +93,9 @@ public abstract class AbstractAgent<ResultType, ProgressType> implements Agent<R
         mAgentListener = agentListener;
     }
 
+    /**
+     * Get the AgentExecutor associated with this Agent's execution. Use this when starting other Agents from this Agent.
+     */
     public AgentExecutor getAgentExecutor() {
         return mAgentExecutor;
     }
@@ -89,5 +104,19 @@ public abstract class AbstractAgent<ResultType, ProgressType> implements Agent<R
     public void setAgentExecutor(AgentExecutor agentExecutor) throws NullPointerException {
         if (agentExecutor == null) throw new NullPointerException("AgentExecutor cannot be null");
         mAgentExecutor = agentExecutor;
+    }
+
+    /**
+     * Call to notify the listener of completion.
+     */
+    protected void notifyCompletion(ResultType result) {
+        getAgentListener().onCompletion(getUniqueIdentifier(), result);
+    }
+
+    /**
+     * Call to notify the listener of progress.
+     */
+    protected void notifyProgress(ProgressType progress) {
+        getAgentListener().onProgress(getUniqueIdentifier(), progress);
     }
 }

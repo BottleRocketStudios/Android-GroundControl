@@ -254,6 +254,13 @@ public class StandardExecutionBuilder<ResultType, ProgressType> implements Execu
     }
 
     @Override
+    public ExecutionBuilder<ResultType, ProgressType> disableCache() {
+        bypassCache(true);
+        cacheAgeMs(0);
+        return this;
+    }
+
+    @Override
     public ExecutionBuilder<ResultType, ProgressType> timeout(long timeoutMs) {
         if (!hasAgentPolicy()) {
             throw new IllegalStateException("You must establish a baseline policy first see policy method documentation.");

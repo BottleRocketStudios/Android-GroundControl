@@ -15,6 +15,7 @@
 
 package com.bottlerocketstudios.groundcontrol;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.bottlerocketstudios.groundcontrol.agent.Agent;
@@ -173,6 +174,9 @@ public class AgentExecutor implements InactivityCleanupListener {
         mInactivityCleanupRunnable.restartTimer();
 
         String agentIdentifier = agent.getUniqueIdentifier();
+        if (TextUtils.isEmpty(agentIdentifier)) {
+            throw new IllegalArgumentException("Agent " + agent.getClass().getCanonicalName() + " returned '" + String.valueOf(agentIdentifier) + "' from getUniqueIdentifier(). The identifier must be a non-empty String.");
+        }
 
         AgentTether agentTether = createAgentTether(agentListener, agentIdentifier);
 

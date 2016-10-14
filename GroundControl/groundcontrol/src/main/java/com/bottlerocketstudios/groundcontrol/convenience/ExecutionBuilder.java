@@ -133,6 +133,11 @@ public interface ExecutionBuilder<ResultType, ProgressType> {
     ExecutionBuilder<ResultType, ProgressType> cacheAgeMs(long cacheAgeMs);
 
     /**
+     * Simultaneously call bypassCache(true) and cacheAgeMs(0)
+     */
+    ExecutionBuilder<ResultType, ProgressType> disableCache();
+
+    /**
      * Set the maximum time in milliseconds before the associated listener is called back with a null
      * failure response if a real response has not been delivered.
      *

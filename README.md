@@ -53,7 +53,7 @@ The goal in designing Agents is that the consumer of the information doesn't kno
     *   Manage a repository for default AgentPolicy instances.
     *   Make building upon standard policies easier. 
     *   Helps put rails on common usage patterns. 
-    *   If you call .uiAgent(this, agent) then you must call .onDestroy(this) where *this* is an instance of a UI element.
+    *   **IMPORTANT** If you call .uiAgent(this, agent) then you must call .onDestroy(this) where *this* is an instance of a **UI** lifecycle related object like an Activity, Fragment, Presenter or View. Using just .agent().uiCallback() is sufficient if you only need for the callback to be on the UI thread but handled by a durable object. 
 *   Agent - A unit of work that has some agency to determine what its blocking operations may be before delivering a result or progress indication.
     *   AbstractAgent handles some of the basic plumbing. Extend from it in most cases.
     *   DependencyHandlingAgent is useful if your Agent will depend on multiple other Agents completing before it can start.
@@ -109,7 +109,7 @@ Add the jcenter repository and include the library in your project with the comp
 
         dependencies {
             ...
-            compile 'com.bottlerocketstudios:groundcontrol:1.1.3'
+            compile 'com.bottlerocketstudios:groundcontrol:1.1.4'
         }
 
 In rare cases where you need to pull a snapshot build to help troubleshoot the develop branch, snapshots are hosted by JFrog. **You should not ship a release using the snapshot library** as the actual binary referenced by snapshot is going to change with every build of the develop branch.
@@ -124,7 +124,7 @@ In rare cases where you need to pull a snapshot build to help troubleshoot the d
          
          dependencies {
             ...
-            compile 'com.bottlerocketstudios:groundcontrol:1.1.4-SNAPSHOT'
+            compile 'com.bottlerocketstudios:groundcontrol:1.1.5-SNAPSHOT'
          }
 
 ### Sample Usage
@@ -196,10 +196,6 @@ This simple example illustrates the use of an Agent "MyAgent" that will return a
                 notifyProgress();
             }
             
-            private notifyProgress() {
-                getAgentListener().onProgress(getUniqueIdentifier(), mProgress);            
-            }
-
             @Override
             public void run() {
                 boolean success = false;
@@ -207,11 +203,11 @@ This simple example illustrates the use of an Agent "MyAgent" that will return a
                 while (!mCancelled) {
                     //Do some time consuming iterative work then notify 50% complete. 
                     mProgress = 0.5f;
-                    notifyProgress();
+                    notifyProgress(mProgress);
                 }
                 ...                
                 //Work is over notify completion.                
-                getAgentListener().onComplete(getUniqueIdentifier(), success && !mCancelled);
+                notifyCompletion(success && !mCancelled);
             }
         }
         
@@ -298,7 +294,7 @@ This example uses the oneTime facility of GroundControl to manage reattach after
                 success = LoginThing.doLogin(mUsername, mPassword);
                 ...                
                 //Work is over notify completion.                
-                getAgentListener().onComplete(getUniqueIdentifier(), success && !mCancelled);
+                notifyCompletion(success && !mCancelled);
             }
         }
 
@@ -339,7 +335,7 @@ Agents can depend on other agents to do their work. Here work is handed off to a
                             if (location != null) {
                                 StoreCollection storeCollection = getStoreCollection(location);
                             }
-                            getAgentListener().onCompletion(getUniqueIdentifier(), storeCollection);
+                            notifyCompletion(storeCollection);
                         }
                     })
                     .execute();
@@ -414,6 +410,17 @@ You may also create your own policies that are not part of the defaults
 			.policy(MyGroundControlConfiguration.MY_POLICY_NAME)
 			.uiCallback(mMyListener)
 			.execute();
+			
+There is now a single method to call if you want to disable the UI cache globally which is useful if you have another means of keeping the result around and receiving delivery of the result even during a configuration change.
+
+        //Globally disable cache for the default UI policy on the default executor.
+        GroundControl.disableCache();
+        
+        //One-time disable cache for single execution
+        GroundControl.uiAgent(this, new MyAgent())
+            .disableCache()
+            .uiCallback(mMyListener)
+            .execute();
 
 #### Customizing AgentExecutor
 The AgentExecutor can be customized quite a bit using the AgentExecutorBuilder. With it you can customize (or not) just about every aspect of the AgentExecutor. This is an advanced topic and almost anything can be achieved with the combination of AgentPolicy and custom Agent implementations. If you think you need to customize this, be sure that the AgentPolicy or some custom Agent would not work. 
@@ -459,5 +466,5 @@ This project must be built with gradle.
 
 *   Version Numbering - The version name should end with "-SNAPSHOT" for non release builds. This will cause the resulting binary, source, and javadoc files to be uploaded to the snapshot repository in Maven as a snapshot build. Removing snapshot from the version name will publish the build on jcenter. If that version is already published, it will not overwrite it.
 *   Execution - To build this libarary, associated tasks are dynamically generated by Android build tools in conjunction with Gradle. Example command for the production flavor of the release build type: 
-    *   Build and upload: `./gradlew --refresh-dependencies clean uploadArchives`
-    *   Build only: `./gradlew --refresh-dependencies clean jarRelease`
+    *   Build and upload: `./gradlew --refresh-dependencies clean lint uploadToMaven`
+    *   Build only: `./gradlew --refresh-dependencies clean lint jarRelease`
